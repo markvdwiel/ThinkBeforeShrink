@@ -193,7 +193,7 @@ predridge05 <- predict(ridge05, newx=Xte, type="response")
 predridge05[1:10]
 
 #' Stan models need to be compiled once before fitting
-source('C:/Synchr/Rscripts/SimpleScripts/LinRegr/Github/ExampleThinkShrink_functions.R')
+source('ExampleThinkShrink_functions.R')
 
 #' Compiles stan code for Bayesian fits; takes some time.
 pmt <- proc.time()

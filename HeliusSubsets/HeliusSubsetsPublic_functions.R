@@ -237,6 +237,23 @@ RPSE <- function(coefs,sets){
   return(pses)
 }
 
+#computes calibration slopes
+calibrateperset0 <- function(coefs,sets, wh, reverse=F){
+  #nfit <- 5; coefs <- coefsmgcv;wh<- c(1,3)
+  nfit <- length(coefs)
+  allslopes <- c()
+  for(i in 1:nfit){
+    #i <- 1;
+    print(i)
+    preds <- predfromcoef(i,coefs)
+    predtesttrue <- predtrue[-sets[[i]]]
+    if(reverse) slopes <- sapply(wh,function(k) return(lm(x~0+y,data=data.frame(y=preds[,k],x=predtesttrue))$coef)) else slopes <- sapply(wh,function(k) return(lm(y~0+x,data=data.frame(y=preds[,k],x=predtesttrue))$coef))
+    allslopes <- rbind(allslopes,slopes)
+  }
+  colnames(allslopes) <- colnames(coefs[[1]][,wh])
+  return(allslopes)
+}
+
 #computes cslope by regressing estimated prediction on true ones for test sets
 calibrateperset <- function(coefs,sets, wh, reverse=F){
   #nfit <- 5; coefs <- coefsmgcv;wh<- c(1,3)

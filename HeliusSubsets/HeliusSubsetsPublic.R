@@ -104,31 +104,31 @@ trainind <- lapply(nsetsfit, function(ind){setind <- sets[[ind]]; return(setind)
 return(trainind)
 }
 
-#' Create 400 subsets of sizes n=50, 400
-td50_400 <- makeTraining(chunksize=50,nfit=400)
+#' Create 400 subsets of sizes n=100, 400
+td100_400 <- makeTraining(chunksize=100,nfit=400,nrepeat=2)
 td200_400_4 <- makeTraining(chunksize=200,nfit=400,nrepeat=4)
 
 
 
 #' ## Apply fitting methods
-#' Fitting models for 400 (!) training data sets; n=50, n=200
+#' Fitting models for 400 (!) training data sets; n=100, n=200
 #' Will take considerable time (several hours)
 
 if(dofit){
-  nfit <- length(td50_400)
+  nfit <- length(td100_400)
   
   #' Variations of ridge with mgcv
-  system.time(penCmgcv <- lapply(1:nfit,penCompare,trainind = td50_400))
+  system.time(penCmgcv <- lapply(1:nfit,penCompare,trainind = td100_400))
   
   #' lasso with glmnet
-  system.time(penClasso <- lapply(1:nfit,penComparelasso,trainind = td50_400))
+  system.time(penClasso <- lapply(1:nfit,penComparelasso,trainind = td100_400))
   
   #' Variations of Bayesian ridge (including local) with shrinkage package
   #' Note: credibility intervals of predictions are computed on fixed test set
   #' when fitting to save memory space
-  system.time(penCbayes <- lapply(1:nfit,penCompareBayes,trainind = td50_400,
+  system.time(penCbayes <- lapply(1:nfit,penCompareBayes,trainind = td100_400,
                                   testind = testfixedind)) 
-  save(penCmgcv,penClasso,penCbayes,file="resn50noise_nfit400.Rdata")
+  save(penCmgcv,penClasso,penCbayes,file="resn100noise_nfit400.Rdata")
   
   #' Same for n=200
   nfit <- length(td200_400_4)
@@ -142,9 +142,9 @@ if(dofit){
 
 #' ## Extracting results
 
-nsub <- 50
+nsub <- 100
 setwd(wd)
-if(nsub ==50) load("resn50noise_nfit400.Rdata") else load("resn200noise_nfit400.Rdata")
+if(nsub ==100) load("resn100noise_nfit400.Rdata") else load("resn200noise_nfit400.Rdata")
 
 #' Extract coefficients from various fitters
 coefsmgcv <- lapply(penCmgcv,coeffun,method="mgcv")
@@ -156,7 +156,7 @@ coefsbayes <- lapply(penCbayes,coeffun,method="shrinkage")
 
 Y <- helius4$sbp
 X <- helius4[,-1] #remove response
-if(nsub ==50) sets <- td50_400 else sets <- td200_400_4
+if(nsub ==100) sets <- td100_400 else sets <- td200_400_4
 
 #' Prediction squared error
 rpsemgcv <- t(RPSE(coefsmgcv,sets=sets))
@@ -180,7 +180,7 @@ axis(1,at=1:length(cn),cn)
 
 #' Comparing performance of 2-pen, 1-pen and 0-pen (OLS) for various sample 
 #' sizes
-nseq <- seq(50,200,by=15)
+nseq <- seq(100,200,by=15)
 if(dofit){
   system.time(allfits <- lapply(nseq,pencompare3n,nfit=100))
   save(allfits, file="allfits_samplesize.Rdata")
@@ -210,12 +210,14 @@ points(nseq,allmedians[,3],lty=1,col=3,pch=3,type="b",lwd=3)
 legend(165,0.35,legend=c("OLS","ridge","ridge_2"),col=1:3,lty=1,lwd=3,pch=1:3)
 
 #' ### Evaluating Calibration (cslopes)
-nsub <- 50
-if(nsub == 50) sets <- td50_400 else sets <- td200_400_4
+nsub <- 100
+if(nsub == 100) sets <- td100_400 else sets <- td200_400_4
 
-#' Compute cslopes per subset and method. Takes a minute
-cbbayset <- calibrateperset(coefsbayes,sets,c(3,4,6))
-cbset <- calibrateperset(coefsmgcv,sets,c(1,3,4))
+#' Compute calibration slopes per subset and method. Takes a minute. Regression
+#' slopes ypred vs true can be obtained by replacing 'calibrateperset0'
+#' by 'calibrateperset'
+cbbayset <- calibrateperset0(coefsbayes,sets,c(3,4,6))
+cbset <- calibrateperset0(coefsmgcv,sets,c(1,3,4))
 
 slopemat0 <- cbind(cbset,cbbayset)
 slopemat<- slopemat0[,c(1,6,2,4,3,5)]
@@ -266,7 +268,7 @@ abline(v=effsize[11],lwd=2)
 
 #' ### Variability of ridge penalties
 #' 
-#' Assumes nsub is set (to 50 or 200) and fitting results have been loaded
+#' Assumes nsub is set (to 100 or 200) and fitting results have been loaded
 #' (see above)
 #' 
 #' Retrieve ridge penalties from mgcv results
@@ -360,7 +362,7 @@ for(i in 1:4){
 
 #' ## Coverage of confidence intervals of predictions
 #' 
-#' Assumes nsub is set (to 50 or 200) and fitting results have been loaded
+#' Assumes nsub is set (to 100 or 200) and fitting results have been loaded
 #' (see above)
 #' 
 nfit <- length(penCmgcv)
